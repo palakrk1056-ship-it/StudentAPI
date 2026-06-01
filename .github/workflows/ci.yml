@@ -1,0 +1,64 @@
+#Name of the workflow. you can give any name
+name: StudentAPI CI
+
+on:
+   #Run CI when code is pushed to main or any feature branch
+  push:
+    branches: 
+     -main 
+     -feature/**
+   
+    #Run CI when a pull request is created or updated for main
+  pull_request:
+    branches:
+      -main
+
+  # A job is a group of steps. its internal key name is: build-test-publish 
+  # display name is Build, Test and Publish which is visible to user 
+  # it will run on a machine which is a linux machine ubuntu
+
+jobs:
+  build-test-publish:
+    name: Build, Test, and Publish
+    runs-on: ubuntu-latest
+
+     # steps are the works or tasks done inside a job 
+    steps:
+      # Step-1 : Download the repository code
+      - name : Checkout source code
+        uses: actions/checkout@v5
+
+      # Step-2 : Install .NET 10 SDK
+      - name : Setup .NET 10 SDK
+        uses : actions/setup-dotnet@v5
+        with :  
+            dotnet-version: '10.0.x'
+
+      # Step-3 : Restore NugGet packages
+      - name: Restore dependencies 
+        run: dotnet restore StudentAPI.sln
+
+      # Step-4 : Build the solution in Release mode
+      - name: Build solution
+        run: dotnet build StudentAPI.sln --configuration Release --no-restore
+
+      # Step-5 : Run unit tests
+      - name: Run tests
+        run: dotnet test StudentAPI.sln --configuration Release --no-build --verbosity normal
+
+      # Step-6 : Publish the API project
+      - name: Upload publish artifect
+        run: dotnet publish StudentAPI/StudentAPI.csproj --configuration Release --output ./publish --no-build
+
+      # Step-7 : Store the publish output as an artifact
+      - name: Upload publish artifact 
+        uses: actions/upload-artifact@v6
+        with:
+          name: studentmanagement-api-publish
+          path: ./publish
+          
+        
+        
+
+  
+  
